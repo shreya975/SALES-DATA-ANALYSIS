@@ -1,13 +1,10 @@
 # ==========================================================
-# 📊 ENTERPRISE SALES ANALYTICS DASHBOARD
+# 💎 PREMIUM ENTERPRISE SALES ANALYTICS DASHBOARD
 # ==========================================================
 
 import sys
 import os
 
-# ----------------------------------------------------------
-# FIX: Add project root to Python path
-# ----------------------------------------------------------
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.append(PROJECT_ROOT)
 
@@ -25,63 +22,69 @@ from src.forecasting import run_forecasting
 # ----------------------------------------------------------
 
 st.set_page_config(
-    page_title="Enterprise Sales Analytics",
+    page_title="Enterprise Sales Intelligence",
     layout="wide"
 )
 
 # ----------------------------------------------------------
-# CUSTOM CSS (Corporate Look)
+# PREMIUM CSS
 # ----------------------------------------------------------
 
 st.markdown("""
 <style>
-.big-font {
-    font-size:20px !important;
+.metric-card {
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+}
+.section-title {
+    font-size: 24px;
     font-weight: bold;
+    color: #1f4e79;
 }
 </style>
 """, unsafe_allow_html=True)
 
-st.title("📊 Enterprise Sales Analytics Platform")
+st.markdown("<div class='section-title'>📊 Enterprise Sales Intelligence Platform</div>", unsafe_allow_html=True)
 st.markdown("---")
 
 # ----------------------------------------------------------
-# LOAD DATA (Using absolute path)
+# LOAD DATA
 # ----------------------------------------------------------
 
 @st.cache_data
 def load_data():
-    data_path = os.path.join(PROJECT_ROOT, "data", "processed", "sales_cleaned.csv")
-    df = pd.read_csv(data_path)
+    path = os.path.join(PROJECT_ROOT, "data", "processed", "sales_cleaned.csv")
+    df = pd.read_csv(path)
     df["Order_Date"] = pd.to_datetime(df["Order_Date"])
     return df
 
 df = load_data()
 
 # ----------------------------------------------------------
-# SIDEBAR FILTERS
+# SIDEBAR
 # ----------------------------------------------------------
 
 st.sidebar.header("🔎 Filters")
 
 selected_region = st.sidebar.multiselect(
-    "Select Region",
+    "Region",
     df["Region"].unique(),
     default=df["Region"].unique()
 )
 
 selected_category = st.sidebar.multiselect(
-    "Select Category",
+    "Category",
     df["Category"].unique(),
     default=df["Category"].unique()
 )
 
 date_range = st.sidebar.date_input(
-    "Select Date Range",
+    "Date Range",
     [df["Order_Date"].min(), df["Order_Date"].max()]
 )
 
-# Apply Filters
 filtered_df = df[
     (df["Region"].isin(selected_region)) &
     (df["Category"].isin(selected_category)) &
@@ -89,13 +92,9 @@ filtered_df = df[
     (df["Order_Date"] <= pd.to_datetime(date_range[1]))
 ]
 
-# ----------------------------------------------------------
-# PAGE NAVIGATION
-# ----------------------------------------------------------
-
 page = st.sidebar.radio("Navigate", [
     "Executive Overview",
-    "Product Analysis",
+    "Product Performance",
     "Regional Insights",
     "Customer Intelligence",
     "Forecasting"
@@ -107,7 +106,7 @@ page = st.sidebar.radio("Navigate", [
 
 if page == "Executive Overview":
 
-    st.markdown("## 🏠 Executive Overview")
+    st.markdown("<div class='section-title'>Executive Overview</div>", unsafe_allow_html=True)
 
     kpis = executive_summary(filtered_df)
 
@@ -115,49 +114,60 @@ if page == "Executive Overview":
 
     col1.metric("Total Revenue", f"₹{kpis['Total Revenue']:,.0f}")
     col2.metric("Total Profit", f"₹{kpis['Total Profit']:,.0f}")
-    col3.metric("Profit Margin %", f"{kpis['Profit Margin %']}%")
+    col3.metric("Profit Margin", f"{kpis['Profit Margin %']}%")
     col4.metric("Avg Order Value", f"₹{kpis['Average Order Value']:,.0f}")
 
     st.markdown("---")
-    st.subheader("📈 Monthly Revenue Trend")
 
-    monthly = filtered_df.groupby(["Year", "Month"])["Revenue"].sum().reset_index()
+    colA, colB = st.columns(2)
+
+    # Revenue Trend
+    monthly = filtered_df.groupby(["Year","Month"])["Revenue"].sum().reset_index()
     monthly["Date"] = pd.to_datetime(
         monthly["Year"].astype(str) + "-" +
         monthly["Month"].astype(str) + "-01"
     )
     monthly = monthly.sort_values("Date")
 
-    fig, ax = plt.subplots(figsize=(12, 5))
-    ax.plot(monthly["Date"], monthly["Revenue"], marker="o")
-    ax.set_xlabel("Date")
-    ax.set_ylabel("Revenue")
-    ax.set_title("Monthly Revenue Trend")
-    plt.xticks(rotation=45)
-    st.pyplot(fig)
+    with colA:
+        st.subheader("📈 Revenue Trend")
+        fig, ax = plt.subplots(figsize=(6,4))
+        ax.plot(monthly["Date"], monthly["Revenue"], marker="o", color="#1f4e79")
+        plt.xticks(rotation=45)
+        st.pyplot(fig)
 
-    st.download_button(
-        label="📥 Download Filtered Data",
-        data=filtered_df.to_csv(index=False),
-        file_name="filtered_sales.csv",
-        mime="text/csv"
-    )
+    with colB:
+        st.subheader("💰 Profit Trend")
+        profit_monthly = filtered_df.groupby(["Year","Month"])["Profit"].sum().reset_index()
+        profit_monthly["Date"] = pd.to_datetime(
+            profit_monthly["Year"].astype(str) + "-" +
+            profit_monthly["Month"].astype(str) + "-01"
+        )
+        profit_monthly = profit_monthly.sort_values("Date")
+
+        fig2, ax2 = plt.subplots(figsize=(6,4))
+        ax2.plot(profit_monthly["Date"], profit_monthly["Profit"], marker="o", color="green")
+        plt.xticks(rotation=45)
+        st.pyplot(fig2)
+
+    st.markdown("### 📌 Key Insight")
+    st.info("Revenue shows strong seasonal spikes during festive months with steady post-COVID recovery trend.")
 
 # ==========================================================
-# 📦 PRODUCT ANALYSIS
+# 📦 PRODUCT PERFORMANCE
 # ==========================================================
 
-elif page == "Product Analysis":
+elif page == "Product Performance":
 
-    st.markdown("## 📦 Product Performance")
+    st.markdown("<div class='section-title'>Product Performance</div>", unsafe_allow_html=True)
 
     product_rev = filtered_df.groupby("Product")["Revenue"].sum().sort_values(ascending=False)
 
-    fig, ax = plt.subplots(figsize=(12, 6))
-    product_rev.head(10).plot(kind="bar", ax=ax)
-    ax.set_title("Top 10 Products by Revenue")
-    ax.set_ylabel("Revenue")
+    fig, ax = plt.subplots(figsize=(10,5))
+    product_rev.head(10).plot(kind="bar", ax=ax, color="#1f4e79")
     st.pyplot(fig)
+
+    st.info("Top 10 products contribute majority of revenue — inventory optimization recommended.")
 
 # ==========================================================
 # 🌍 REGIONAL INSIGHTS
@@ -165,14 +175,12 @@ elif page == "Product Analysis":
 
 elif page == "Regional Insights":
 
-    st.markdown("## 🌍 Regional Performance")
+    st.markdown("<div class='section-title'>Regional Insights</div>", unsafe_allow_html=True)
 
     region_rev = filtered_df.groupby("Region")["Revenue"].sum().sort_values()
 
-    fig, ax = plt.subplots(figsize=(8, 5))
-    region_rev.plot(kind="barh", ax=ax)
-    ax.set_title("Revenue by Region")
-    ax.set_xlabel("Revenue")
+    fig, ax = plt.subplots(figsize=(8,4))
+    region_rev.plot(kind="barh", ax=ax, color="#1f4e79")
     st.pyplot(fig)
 
 # ==========================================================
@@ -181,7 +189,7 @@ elif page == "Regional Insights":
 
 elif page == "Customer Intelligence":
 
-    st.markdown("## 👤 Customer Segmentation (RFM + KMeans)")
+    st.markdown("<div class='section-title'>Customer Intelligence</div>", unsafe_allow_html=True)
 
     rfm = run_segmentation(filtered_df)
 
@@ -190,7 +198,6 @@ elif page == "Customer Intelligence":
     fig, ax = plt.subplots()
     segment_counts.plot(kind="pie", autopct="%1.1f%%", ax=ax)
     ax.set_ylabel("")
-    ax.set_title("Customer Segment Distribution")
     st.pyplot(fig)
 
 # ==========================================================
@@ -199,24 +206,17 @@ elif page == "Customer Intelligence":
 
 elif page == "Forecasting":
 
-    st.markdown("## 🔮 Revenue Forecasting")
+    st.markdown("<div class='section-title'>Revenue Forecasting</div>", unsafe_allow_html=True)
 
     monthly, test_results, future_forecast, metrics = run_forecasting(filtered_df)
 
-    st.subheader("Model Performance")
-    st.write(metrics)
+    st.metric("Model R² Score", metrics["R2 Score"])
 
-    fig, ax = plt.subplots(figsize=(12, 5))
-
-    ax.plot(monthly["Date"], monthly["Revenue"], label="Actual")
-    ax.plot(test_results["Date"], test_results["Predicted_Revenue"], label="Predicted 2023")
-    ax.plot(future_forecast["Date"], future_forecast["Forecasted_Revenue"], label="Forecast 2024")
+    fig, ax = plt.subplots(figsize=(10,5))
+    ax.plot(monthly["Date"], monthly["Revenue"], label="Actual", color="#1f4e79")
+    ax.plot(test_results["Date"], test_results["Predicted_Revenue"], label="Predicted", color="orange")
+    ax.plot(future_forecast["Date"], future_forecast["Forecasted_Revenue"], label="Forecast", color="green")
     ax.legend()
-
-    ax.set_title("Revenue Forecast")
-    ax.set_xlabel("Date")
-    ax.set_ylabel("Revenue")
-
     st.pyplot(fig)
 
 # ----------------------------------------------------------
@@ -224,4 +224,4 @@ elif page == "Forecasting":
 # ----------------------------------------------------------
 
 st.markdown("---")
-st.markdown("Developed by Shreya | Enterprise Sales Analytics Platform 🚀")
+st.markdown("Developed by Shreya | Premium Enterprise Analytics Platform 🚀")
