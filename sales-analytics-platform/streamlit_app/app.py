@@ -2,6 +2,15 @@
 # 📊 ENTERPRISE SALES ANALYTICS DASHBOARD
 # ==========================================================
 
+import sys
+import os
+
+# ----------------------------------------------------------
+# FIX: Add project root to Python path
+# ----------------------------------------------------------
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+sys.path.append(PROJECT_ROOT)
+
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -37,12 +46,13 @@ st.title("📊 Enterprise Sales Analytics Platform")
 st.markdown("---")
 
 # ----------------------------------------------------------
-# LOAD DATA
+# LOAD DATA (Using absolute path)
 # ----------------------------------------------------------
 
 @st.cache_data
 def load_data():
-    df = pd.read_csv("data/processed/sales_cleaned.csv")
+    data_path = os.path.join(PROJECT_ROOT, "data", "processed", "sales_cleaned.csv")
+    df = pd.read_csv(data_path)
     df["Order_Date"] = pd.to_datetime(df["Order_Date"])
     return df
 
