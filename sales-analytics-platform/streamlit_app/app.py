@@ -1,57 +1,92 @@
 # ==========================================================
-# 💎 PREMIUM ENTERPRISE SALES ANALYTICS DASHBOARD
+# 🪵 WALNUT NOIR – EXECUTIVE REVENUE INTELLIGENCE (COMPLETE)
 # ==========================================================
 
 import sys
 import os
+import plotly.graph_objects as go
+import plotly.express as px
+import pandas as pd
+import streamlit as st
+import numpy as np
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.append(PROJECT_ROOT)
-
-import streamlit as st
-import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
 
 from src.kpi import executive_summary
 from src.segmentation import run_segmentation
 from src.forecasting import run_forecasting
 
-# ----------------------------------------------------------
-# PAGE CONFIG
-# ----------------------------------------------------------
+st.set_page_config(page_title="Sales Data Analytics Platform", layout="wide")
 
-st.set_page_config(
-    page_title="Enterprise Sales Intelligence",
-    layout="wide"
-)
-
-# ----------------------------------------------------------
-# PREMIUM CSS
-# ----------------------------------------------------------
+# ================= DESIGN SYSTEM =================
 
 st.markdown("""
 <style>
-.metric-card {
-    background-color: #f8f9fa;
-    padding: 20px;
-    border-radius: 10px;
-    text-align: center;
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Inter:wght@400;500;600&display=swap');
+
+[data-testid="stAppViewContainer"] {
+    background: linear-gradient(135deg, #2E1F1B, #5E4B43);
+    color: #F3EDE7;
+    font-family: 'Inter', sans-serif;
 }
+
+.header-panel {
+    background: rgba(255,255,255,0.06);
+    padding: 60px;
+    border-radius: 50px;
+    box-shadow: 0px 30px 70px rgba(0,0,0,0.6);
+    margin-bottom: 50px;
+}
+
+.header-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 48px;
+}
+
+.header-subtitle {
+    font-size: 20px;
+    opacity: 0.85;
+    margin-top: 15px;
+}
+
 .section-title {
-    font-size: 24px;
-    font-weight: bold;
-    color: #1f4e79;
+    font-family: 'Playfair Display', serif;
+    font-size: 34px;
+    margin-bottom: 35px;
+}
+
+.scorecard {
+    background: rgba(255,255,255,0.07);
+    padding: 25px;
+    border-radius: 35px;
+    text-align: center;
+    font-size: 20px;
+}
+
+.insight-box {
+    background: rgba(255,255,255,0.08);
+    padding: 30px;
+    border-radius: 40px;
+    font-size: 18px;
+    line-height: 1.6;
+    margin-top: 30px;
 }
 </style>
 """, unsafe_allow_html=True)
 
-st.markdown("<div class='section-title'>📊 Enterprise Sales Intelligence Platform</div>", unsafe_allow_html=True)
-st.markdown("---")
+# ================= HEADER =================
 
-# ----------------------------------------------------------
-# LOAD DATA
-# ----------------------------------------------------------
+st.markdown("""
+<div class="header-panel">
+    <div class="header-title">Sales Data Analytics Platform</div>
+    <div class="header-subtitle">
+        Executive Strategy • Revenue Optimization • Predictive Intelligence
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
+# ================= LOAD DATA =================
 
 @st.cache_data
 def load_data():
@@ -62,166 +97,160 @@ def load_data():
 
 df = load_data()
 
-# ----------------------------------------------------------
-# SIDEBAR
-# ----------------------------------------------------------
+# ================= STRATEGIC SCORING =================
 
-st.sidebar.header("🔎 Filters")
+def calculate_business_scores(df):
+    monthly = df.groupby(["Year","Month"])["Revenue"].sum().reset_index()
+    monthly["Date"] = pd.to_datetime(
+        monthly["Year"].astype(str)+"-"+monthly["Month"].astype(str)+"-01"
+    )
 
-selected_region = st.sidebar.multiselect(
-    "Region",
-    df["Region"].unique(),
-    default=df["Region"].unique()
-)
+    growth = monthly["Revenue"].pct_change().mean()
+    momentum = min(max((growth*100)+50,0),100)
 
-selected_category = st.sidebar.multiselect(
-    "Category",
-    df["Category"].unique(),
-    default=df["Category"].unique()
-)
+    volatility = monthly["Revenue"].std()/monthly["Revenue"].mean()
+    stability = min(max(100-(volatility*100),0),100)
 
-date_range = st.sidebar.date_input(
-    "Date Range",
-    [df["Order_Date"].min(), df["Order_Date"].max()]
-)
+    product_share = df.groupby("Product")["Revenue"].sum()
+    top_share = product_share.max()/product_share.sum()
+    diversification = min(max((1-top_share)*100,0),100)
 
-filtered_df = df[
-    (df["Region"].isin(selected_region)) &
-    (df["Category"].isin(selected_category)) &
-    (df["Order_Date"] >= pd.to_datetime(date_range[0])) &
-    (df["Order_Date"] <= pd.to_datetime(date_range[1]))
+    margin = df["Profit"].sum()/df["Revenue"].sum()
+    profitability = min(max(margin*200,0),100)
+
+    overall = np.mean([momentum,stability,diversification,profitability])
+
+    return {
+        "Momentum": round(momentum,1),
+        "Stability": round(stability,1),
+        "Diversification": round(diversification,1),
+        "Profitability": round(profitability,1),
+        "Business Health": round(overall,1)
+    }
+
+# ================= NAVIGATION =================
+
+modules = [
+    "Executive Overview",
+    "Product Intelligence",
+    "Regional Matrix",
+    "Customer Segmentation",
+    "Forecast Strategy"
 ]
 
-page = st.sidebar.radio("Navigate", [
-    "Executive Overview",
-    "Product Performance",
-    "Regional Insights",
-    "Customer Intelligence",
-    "Forecasting"
-])
+selected = st.selectbox("Select Module", modules)
 
-# ==========================================================
-# 🏠 EXECUTIVE OVERVIEW
-# ==========================================================
+# ================= EXECUTIVE OVERVIEW =================
 
-if page == "Executive Overview":
+if selected == "Executive Overview":
 
     st.markdown("<div class='section-title'>Executive Overview</div>", unsafe_allow_html=True)
 
-    kpis = executive_summary(filtered_df)
+    kpis = executive_summary(df)
+    scores = calculate_business_scores(df)
 
-    col1, col2, col3, col4 = st.columns(4)
+    c1,c2,c3,c4 = st.columns(4)
+    c1.metric("Total Revenue", f"₹{kpis['Total Revenue']:,.0f}")
+    c2.metric("Total Profit", f"₹{kpis['Total Profit']:,.0f}")
+    c3.metric("Profit Margin", f"{kpis['Profit Margin %']}%")
+    c4.metric("Avg Order Value", f"₹{kpis['Average Order Value']:,.0f}")
 
-    col1.metric("Total Revenue", f"₹{kpis['Total Revenue']:,.0f}")
-    col2.metric("Total Profit", f"₹{kpis['Total Profit']:,.0f}")
-    col3.metric("Profit Margin", f"{kpis['Profit Margin %']}%")
-    col4.metric("Avg Order Value", f"₹{kpis['Average Order Value']:,.0f}")
+    st.markdown("<br>", unsafe_allow_html=True)
 
-    st.markdown("---")
+    s1,s2,s3,s4,s5 = st.columns(5)
+    s1.markdown(f"<div class='scorecard'>Momentum<br><b>{scores['Momentum']}</b></div>", unsafe_allow_html=True)
+    s2.markdown(f"<div class='scorecard'>Stability<br><b>{scores['Stability']}</b></div>", unsafe_allow_html=True)
+    s3.markdown(f"<div class='scorecard'>Diversification<br><b>{scores['Diversification']}</b></div>", unsafe_allow_html=True)
+    s4.markdown(f"<div class='scorecard'>Profitability<br><b>{scores['Profitability']}</b></div>", unsafe_allow_html=True)
+    s5.markdown(f"<div class='scorecard'>Business Health<br><b>{scores['Business Health']}</b></div>", unsafe_allow_html=True)
 
-    colA, colB = st.columns(2)
+    monthly = df.groupby(["Year","Month"])["Revenue"].sum().reset_index()
+    monthly["Date"] = pd.to_datetime(monthly["Year"].astype(str)+"-"+monthly["Month"].astype(str)+"-01")
 
-    # Revenue Trend
-    monthly = filtered_df.groupby(["Year","Month"])["Revenue"].sum().reset_index()
-    monthly["Date"] = pd.to_datetime(
-        monthly["Year"].astype(str) + "-" +
-        monthly["Month"].astype(str) + "-01"
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(
+        x=monthly["Date"],
+        y=monthly["Revenue"],
+        line=dict(color="#F3EDE7", width=5),
+        fill="tozeroy",
+        fillcolor="rgba(243,237,231,0.1)"
+    ))
+
+    fig.update_layout(
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        font=dict(size=16,color="#F3EDE7")
     )
-    monthly = monthly.sort_values("Date")
 
-    with colA:
-        st.subheader("📈 Revenue Trend")
-        fig, ax = plt.subplots(figsize=(6,4))
-        ax.plot(monthly["Date"], monthly["Revenue"], marker="o", color="#1f4e79")
-        plt.xticks(rotation=45)
-        st.pyplot(fig)
+    st.plotly_chart(fig, use_container_width=True)
 
-    with colB:
-        st.subheader("💰 Profit Trend")
-        profit_monthly = filtered_df.groupby(["Year","Month"])["Profit"].sum().reset_index()
-        profit_monthly["Date"] = pd.to_datetime(
-            profit_monthly["Year"].astype(str) + "-" +
-            profit_monthly["Month"].astype(str) + "-01"
-        )
-        profit_monthly = profit_monthly.sort_values("Date")
+# ================= PRODUCT INTELLIGENCE =================
 
-        fig2, ax2 = plt.subplots(figsize=(6,4))
-        ax2.plot(profit_monthly["Date"], profit_monthly["Profit"], marker="o", color="green")
-        plt.xticks(rotation=45)
-        st.pyplot(fig2)
+elif selected == "Product Intelligence":
 
-    st.markdown("### 📌 Key Insight")
-    st.info("Revenue shows strong seasonal spikes during festive months with steady post-COVID recovery trend.")
+    st.markdown("<div class='section-title'>Product Intelligence</div>", unsafe_allow_html=True)
 
-# ==========================================================
-# 📦 PRODUCT PERFORMANCE
-# ==========================================================
+    product = df.groupby("Product")["Revenue"].sum().sort_values().tail(10).reset_index()
 
-elif page == "Product Performance":
+    fig = px.bar(product, x="Revenue", y="Product", orientation="h",
+                 color="Revenue", color_continuous_scale=["#3A2A25","#E8DFD8"])
 
-    st.markdown("<div class='section-title'>Product Performance</div>", unsafe_allow_html=True)
+    fig.update_layout(font=dict(size=16,color="#F3EDE7"))
+    st.plotly_chart(fig, use_container_width=True)
 
-    product_rev = filtered_df.groupby("Product")["Revenue"].sum().sort_values(ascending=False)
+# ================= REGIONAL MATRIX =================
 
-    fig, ax = plt.subplots(figsize=(10,5))
-    product_rev.head(10).plot(kind="bar", ax=ax, color="#1f4e79")
-    st.pyplot(fig)
+elif selected == "Regional Matrix":
 
-    st.info("Top 10 products contribute majority of revenue — inventory optimization recommended.")
+    st.markdown("<div class='section-title'>Regional Matrix</div>", unsafe_allow_html=True)
 
-# ==========================================================
-# 🌍 REGIONAL INSIGHTS
-# ==========================================================
+    region = df.groupby("Region")["Revenue"].sum().reset_index()
 
-elif page == "Regional Insights":
+    fig = px.bar(region, x="Revenue", y="Region", orientation="h",
+                 color="Revenue", color_continuous_scale=["#5E4B43","#E8DFD8"])
 
-    st.markdown("<div class='section-title'>Regional Insights</div>", unsafe_allow_html=True)
+    fig.update_layout(font=dict(size=16,color="#F3EDE7"))
+    st.plotly_chart(fig, use_container_width=True)
 
-    region_rev = filtered_df.groupby("Region")["Revenue"].sum().sort_values()
+# ================= CUSTOMER SEGMENTATION =================
 
-    fig, ax = plt.subplots(figsize=(8,4))
-    region_rev.plot(kind="barh", ax=ax, color="#1f4e79")
-    st.pyplot(fig)
+elif selected == "Customer Segmentation":
 
-# ==========================================================
-# 👤 CUSTOMER INTELLIGENCE
-# ==========================================================
+    st.markdown("<div class='section-title'>Customer Segmentation</div>", unsafe_allow_html=True)
 
-elif page == "Customer Intelligence":
+    rfm = run_segmentation(df)
+    seg = rfm["Segment"].value_counts().reset_index()
+    seg.columns = ["Segment","Count"]
 
-    st.markdown("<div class='section-title'>Customer Intelligence</div>", unsafe_allow_html=True)
+    fig = px.pie(seg, names="Segment", values="Count", hole=0.6,
+                 color_discrete_sequence=["#E8DFD8","#C7B5AC","#A68A7B","#8C6F63"])
 
-    rfm = run_segmentation(filtered_df)
+    fig.update_layout(font=dict(size=16,color="#F3EDE7"))
+    st.plotly_chart(fig, use_container_width=True)
 
-    segment_counts = rfm["Segment"].value_counts()
+# ================= FORECAST STRATEGY =================
 
-    fig, ax = plt.subplots()
-    segment_counts.plot(kind="pie", autopct="%1.1f%%", ax=ax)
-    ax.set_ylabel("")
-    st.pyplot(fig)
+elif selected == "Forecast Strategy":
 
-# ==========================================================
-# 🔮 FORECASTING
-# ==========================================================
+    st.markdown("<div class='section-title'>Forecast Strategy</div>", unsafe_allow_html=True)
 
-elif page == "Forecasting":
+    monthly, test_results, future_forecast, metrics = run_forecasting(df)
 
-    st.markdown("<div class='section-title'>Revenue Forecasting</div>", unsafe_allow_html=True)
+    st.metric("Model R² Score", f"{metrics['R2 Score']:.3f}")
 
-    monthly, test_results, future_forecast, metrics = run_forecasting(filtered_df)
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(
+        x=monthly["Date"],
+        y=monthly["Revenue"],
+        name="Actual",
+        line=dict(color="#F3EDE7", width=5)
+    ))
+    fig.add_trace(go.Scatter(
+        x=future_forecast["Date"],
+        y=future_forecast["Forecasted_Revenue"],
+        name="Forecast",
+        line=dict(color="#C7B5AC", width=5, dash="dot")
+    ))
 
-    st.metric("Model R² Score", metrics["R2 Score"])
-
-    fig, ax = plt.subplots(figsize=(10,5))
-    ax.plot(monthly["Date"], monthly["Revenue"], label="Actual", color="#1f4e79")
-    ax.plot(test_results["Date"], test_results["Predicted_Revenue"], label="Predicted", color="orange")
-    ax.plot(future_forecast["Date"], future_forecast["Forecasted_Revenue"], label="Forecast", color="green")
-    ax.legend()
-    st.pyplot(fig)
-
-# ----------------------------------------------------------
-# FOOTER
-# ----------------------------------------------------------
-
-st.markdown("---")
-st.markdown("Developed by Shreya | Premium Enterprise Analytics Platform 🚀")
+    fig.update_layout(font=dict(size=16,color="#F3EDE7"))
+    st.plotly_chart(fig, use_container_width=True)
