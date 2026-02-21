@@ -158,7 +158,7 @@ This demonstrates cross-platform business intelligence expertise.
 The application is deployed using Streamlit Cloud.
 
 🔗 Live Demo:  
-(Add your deployment link here)
+(https://sales-data-analysis-platform.streamlit.app)
 
 ---
 
