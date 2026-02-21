@@ -1,5 +1,5 @@
 # ==========================================================
-# 🪵 WALNUT NOIR – EXECUTIVE REVENUE INTELLIGENCE (COMPLETE)
+# 🪵 SALES DATA ANALYSIS PLATFORM
 # ==========================================================
 
 import sys
@@ -17,7 +17,7 @@ from src.kpi import executive_summary
 from src.segmentation import run_segmentation
 from src.forecasting import run_forecasting
 
-st.set_page_config(page_title="Sales Data Analytics Platform", layout="wide")
+st.set_page_config(page_title="SALES DATA ANALYSIS PLATFORM", layout="wide")
 
 # ================= DESIGN SYSTEM =================
 
@@ -79,7 +79,7 @@ st.markdown("""
 
 st.markdown("""
 <div class="header-panel">
-    <div class="header-title">Sales Data Analytics Platform</div>
+    <div class="header-title">SALES DATA ANALYSIS PLATFORM</div>
     <div class="header-subtitle">
         Executive Strategy • Revenue Optimization • Predictive Intelligence
     </div>
