@@ -161,43 +161,43 @@ The application is deployed using Streamlit Cloud.
 (https://sales-data-analysis-platform.streamlit.app)
 
 ---
-
 ## 📂 Project Structure
 
----
-```
-Sales-Data-Analysis-Platform/
+```text
+sales-analytics-platform/
 │
 ├── data/
 │   ├── raw/
 │   │   └── sales_raw.csv
 │   │
-│   └── processed/
-│       └── sales_cleaned.csv
+│   ├── processed/
+│   │   └── sales_cleaned.csv
+│   │
+│   └── external/
+│
+├── notebooks/
+│   ├── 01_data_exploration.ipynb
+│   ├── 02_feature_engineering.ipynb
+│   └── 03_modeling.ipynb
 │
 ├── src/
-│   ├── __init__.py
-│   ├── data_processing.py
+│   ├── data_loader.py
+│   ├── preprocessing.py
 │   ├── kpi.py
-│   ├── segmentation.py
+│   ├── visualization.py
 │   ├── forecasting.py
-│   ├── scoring_engine.py
-│   ├── recommendation_engine.py
+│   ├── segmentation.py
 │   └── utils.py
 │
 ├── streamlit_app/
-│   ├── app.py
-│   └── assets/
-│       └── custom_styles.css
+│   └── app.py
 │
 ├── powerbi/
-│   └── Executive_Report.pbix
+│   └── dashboard.pbix
 │
 ├── requirements.txt
-├── README.md
-└── .gitignore
+└── README.md
 ```
----
 
 ## 💼 Business Value Demonstrated
 
