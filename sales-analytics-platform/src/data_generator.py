@@ -95,9 +95,9 @@ def generate_customer():
     region = CITY_REGION[city]
     return customer_id, age, gender, city, region
 
-# ---------------------------------
+# ----------------------------------
 # MAIN DATA GENERATION
-# ---------------------------------
+# ----------------------------------
 
 def generate_sales_data():
     data = []
